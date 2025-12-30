@@ -1,37 +1,36 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { CacheService } from 'src/common/cache/cache.services';
+import { PrismaService } from 'src/prisma/prisma';
+import { LoggerServices } from 'src/logger/logger.service';
 
 @Injectable()
 export class AuthService {
-  private readonly CACHE_KEY = 'users';
-  constructor(@Inject(CACHE_MANAGER) private cacheService: CacheService) { }
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly logger: LoggerServices,
+  ) { }
 
   async create(createAuthDto: CreateAuthDto) {
-
-    const users: any[] = (await this.cacheService.get(this.CACHE_KEY)) || [];
-    const newId = users.length > 0 ? users[users.length - 1].id + 1 : 1;
-    const newUser = { id: newId, ...createAuthDto };
-
-    if (users.some(u => u.email === newUser.email)) {
-      throw new Error('User with this email already exists.');
+    try {
+      const result = await this.prismaService.user.create({
+        data: createAuthDto,
+      });
+      return result;
+    } catch (error) {
+      this.logger.error(
+        'User creation failed',
+        error?.stack,
+        AuthService.name,
+      );
     }
-
-    users.push(newUser);
-
-    await this.cacheService.set(this.CACHE_KEY, users, 300); 
-    return newUser;
   }
 
   async findAll() {
-    let users = await this.cacheService.get(this.CACHE_KEY);
-    if (!users) {
-      users = [];
-      await this.cacheService.set(this.CACHE_KEY, users, 300);
-    }
-    return users;
+
+    const result = await this.prismaService.user.findMany()
+    return result
+
   }
 
 

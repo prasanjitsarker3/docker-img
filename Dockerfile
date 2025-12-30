@@ -1,26 +1,27 @@
-# Use official Node.js version 20 image
+# Use Node.js 20
 FROM node:20-alpine
 
-# Set working directory
+# App directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package files first (better caching)
 COPY package*.json ./
 
-# Install dependencies 
-# RUN npm install
+# Install ALL dependencies (dev + prod)
+RUN npm install
 
-# Install Nest CLI globally (optional, usually for development, not production)
-RUN npm install -g @nestjs/cli
-
-# Copy the rest of the project files
+# Copy source code
 COPY . .
 
-# Build the NestJS project
+# Generate Prisma client
+RUN npx prisma generate
+
+# Build NestJS app
 RUN npm run build
 
-# Expose the port the app listens on
-EXPOSE 5000
+# Expose NestJS port
+EXPOSE 5001
 
-# Start the application
-CMD ["node", "dist/main.js"]
+# Start applicationx
+CMD ["node", "dist/src/main.js"]
+# CMD ["npm", "run", "start:dev"]

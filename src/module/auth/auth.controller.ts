@@ -1,21 +1,30 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post()
-  
   async create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+    const result = await this.authService.create(createAuthDto);
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: "User create successfully!",
+      data: result
+    }
   }
 
   @Get()
-  findAll() {
-    return this.authService.findAll();
+  async findAll() {
+    const result = await this.authService.findAll();
+    return {
+      statusCode: HttpStatus.OK,
+      message: "Fetching user successfully!",
+      data: result
+    }
   }
 
   @Get(':id')
